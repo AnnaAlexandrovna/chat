@@ -1,0 +1,65 @@
+<html>
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Chat</title>
+ </head>
+ <body>
+  <h1>Чат</h1>
+   <form  id="chatForm">
+  <p><b>Ваше имя:</b><br>
+   <input id="nameChatForm" type="text" size="40">
+  </p>
+  <p><b>Сообщение:</b><br>
+   <textarea id="messageChatForm" cols="42" rows="3"></textarea></p>
+ </form>
+ <br>
+ </body>
+ <script type="text/javascript">
+let mainParent =  document.createElement("div");
+let createMainParent = function(){
+	    mainParent.id = 'messageHistory';
+	    mainParent.style.position = "absolute";
+	    mainParent.style.top = "200px";
+	    document.body.appendChild(mainParent);
+    }
+createMainParent();
+
+
+document.body.addEventListener('keydown', 
+ function(e) { 
+ 	if (e.keyCode === 13) {		
+ 	let data = new FormData();
+ 	data.append("user", nameChatForm.value);
+ 	data.append("value", messageChatForm.value);
+ 	console.log(data.getAll("user"));
+ 	console.log(data.getAll("value"));
+ 	let xhr = new XMLHttpRequest();
+ 	xhr.responseType="json";
+ 	xhr.open("POST", "receive.php");
+ 	xhr.send(data);
+ 	messageChatForm.value = "";
+ 	}
+ });
+
+let serverMessageLenght=0;
+
+let eventSource = new EventSource("sse.php");
+	eventSource.onmessage = function(event) {
+		if(event.data.length>serverMessageLenght){
+			serverMessageLenght = event.data.length;
+			document.getElementById("messageHistory").remove();
+			mainParent.innerHTML = ''
+			createMainParent();
+			let arr = Object.keys(JSON.parse(event.data));
+			let newMessageArray = JSON.parse(event.data)[arr.length-1];
+			for(let i = arr.length-1; i>=0; i--){
+				let elem = document.createElement("div");
+				elem.innerHTML = `<div><b>${JSON.parse(event.data)[i][0]}:</b></div></div><br><div">${JSON.parse(event.data)[i][1]}<br><br>`;
+				elem.style.width = "100%";
+				mainParent.appendChild(elem);
+				//console.log(elem);
+			}
+		}
+};
+ </script>
+</html>
